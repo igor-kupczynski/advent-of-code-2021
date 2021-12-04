@@ -13,29 +13,38 @@ import (
 func main() {
 	numbers, boards := read(os.Stdin)
 
-	var winningBoard *board
-	var winningNum int
+	var boardsLeft = len(boards)
+	var lastWinBoard *board
+	var lastWinNum int
 bingo:
 	for _, n := range numbers {
 		for _, b := range boards {
+			if b.won {
+				continue
+			}
 			i, j, ok := b.mark(n)
 			if !ok {
 				continue
 			}
 			if b.markedInRows[i] == 5 || b.markedInColumns[j] == 5 {
 				// winning board
-				winningBoard = b
-				winningNum = n
-				break bingo
+				b.won = true
+				lastWinBoard = b
+				lastWinNum = n
+
+				boardsLeft--
+				if boardsLeft == 0 {
+					break bingo
+				}
 			}
 		}
 	}
 
-	if winningBoard == nil {
+	if lastWinBoard == nil {
 		log.Fatalf("No winning board")
 	}
 
-	fmt.Printf("%d\n", winningBoard.sumUnmarked()*winningNum)
+	fmt.Printf("%d\n", lastWinBoard.sumUnmarked()*lastWinNum)
 }
 
 // data model
@@ -44,6 +53,7 @@ type board struct {
 	marked          [5][5]bool
 	markedInRows    [5]int
 	markedInColumns [5]int
+	won             bool
 }
 
 func (b *board) mark(number int) (int, int, bool) {
