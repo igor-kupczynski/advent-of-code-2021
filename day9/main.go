@@ -8,27 +8,72 @@ import (
 	"os"
 )
 
-func neighbourhood(hMap [][]int, y, x int) []int {
-	neighbourhood := make([]int, 0)
+type point struct {
+	y, x int
+}
+
+type heightMap [][]int
+
+func (m heightMap) LenY() int {
+	return len(m)
+}
+
+func (m heightMap) LenX() int {
+	return len(m[0])
+}
+
+func (m heightMap) HeightAt(p point) int {
+	return m[p.y][p.x]
+}
+
+func (m heightMap) RiskLevelAt(p point) int {
+	return m.HeightAt(p) + 1
+}
+
+func (m heightMap) LowPoints() []point {
+	points := make([]point, 0)
+	for y := 0; y < m.LenY(); y++ {
+		for x := 0; x < m.LenX(); x++ {
+			p := point{y: y, x: x}
+			height := m.HeightAt(p)
+			neighbours := neighbourhoodHeights(m, p)
+			if lowest(neighbours, height) {
+				points = append(points, p)
+			}
+		}
+	}
+	return points
+}
+
+func neighbourhoodHeights(m heightMap, p point) []int {
+	heights := make([]int, 0)
+	for _, np := range neighbourhood(m, p) {
+		heights = append(heights, m.HeightAt(np))
+	}
+	return heights
+}
+
+func neighbourhood(m heightMap, p point) []point {
+	neighbourhood := make([]point, 0)
 
 	// top
-	if y > 0 {
-		neighbourhood = append(neighbourhood, hMap[y-1][x])
+	if p.y > 0 {
+		neighbourhood = append(neighbourhood, point{p.y - 1, p.x})
 	}
 
 	// right
-	if x < len(hMap[y])-1 {
-		neighbourhood = append(neighbourhood, hMap[y][x+1])
+	if p.x < m.LenX()-1 {
+		neighbourhood = append(neighbourhood, point{p.y, p.x + 1})
 	}
 
 	// bottom
-	if y < len(hMap)-1 {
-		neighbourhood = append(neighbourhood, hMap[y+1][x])
+	if p.y < m.LenY()-1 {
+		neighbourhood = append(neighbourhood, point{p.y + 1, p.x})
 	}
 
 	// left
-	if x > 0 {
-		neighbourhood = append(neighbourhood, hMap[y][x-1])
+	if p.x > 0 {
+		neighbourhood = append(neighbourhood, point{p.y, p.x - 1})
 	}
 
 	return neighbourhood
@@ -44,31 +89,26 @@ func lowest(xs []int, x int) bool {
 }
 
 func main() {
-	hMap := read()
-	if len(hMap) < 20 {
-		fmt.Printf("%v\n", hMap)
+	m := read()
+	if m.LenY() < 20 {
+		fmt.Printf("%v\n", m)
 	}
 
 	var part1 int
-	for y := 0; y < len(hMap); y++ {
-		for x := 0; x < len(hMap[y]); x++ {
-			height := hMap[y][x]
-			neighbours := neighbourhood(hMap, y, x)
-			if lowest(neighbours, height) {
-				if len(hMap) < 20 {
-					fmt.Printf("(%d, %d) = %d, neighbourhood = %v\n", y, x, height, neighbours)
-				}
-				riskLevel := 1 + height
-				part1 += riskLevel
-			}
+
+	lowPoints := m.LowPoints()
+	for _, lp := range lowPoints {
+		if m.LenY() < 20 {
+			fmt.Printf("%v = %d\n", lp, m.HeightAt(lp))
 		}
+		part1 += m.RiskLevelAt(lp)
 	}
 
 	fmt.Printf("part 1: %d\n", part1)
 }
 
 // boring input read
-func read() [][]int {
+func read() heightMap {
 	lines := make([][]int, 0)
 
 	reader, closer := selectInput()
