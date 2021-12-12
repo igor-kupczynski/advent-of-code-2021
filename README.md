@@ -11,3 +11,16 @@ cat input.txt | go run .
 ```
 * Starting from day 6 the program also accepts the name of the file as first positional argument, e.g.
 `go run . input.txt`
+
+
+## Notes
+
+To revisit and compare notes:
+- Day 8
+
+### Day 8
+
+- I've solved this on paper and then hardcoded the rules (imperative)
+  - I feel think a declarative solution  would be better (prolog, core.logic)
+- Implemented a bit set, which added a lot of complexity and the input is rather small, so probably overengineered
+
