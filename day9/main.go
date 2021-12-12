@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 )
 
 type point struct {
@@ -88,23 +89,80 @@ func lowest(xs []int, x int) bool {
 	return true
 }
 
+func (m heightMap) FindBasin(at point) []point {
+	seen := map[point]struct{}{}
+	acc := []point{at}
+	basin := make([]point, 0)
+	inBasin := func(p point) bool { return m.HeightAt(p) < 9 }
+	notSeen := func(p point) bool { _, ok := seen[p]; return !ok }
+	for len(acc) > 0 {
+		current := acc[0]
+		if _, ok := seen[current]; ok {
+			// seen this item already, let's skip
+			acc = acc[1:]
+			continue
+		}
+		seen[current] = struct{}{}
+
+		basin = append(basin, current) // extend the basin with the current point
+
+		candidates := neighbourhood(m, current)      // find its neighbourhood
+		newCandidates := filter(candidates, notSeen) // keep only new points
+		addToBasin := filter(newCandidates, inBasin) // keep only points in basin
+		acc = append(
+			acc[1:],       // drop the current point
+			addToBasin..., // add its in-basin neighbours
+		)
+	}
+	return basin
+}
+
+func filter(xs []point, fn func(point) bool) []point {
+	buf := make([]point, 0)
+	for _, x := range xs {
+		if fn(x) {
+			buf = append(buf, x)
+		}
+	}
+	return buf
+}
+
 func main() {
 	m := read()
 	if m.LenY() < 20 {
 		fmt.Printf("%v\n", m)
 	}
 
-	var part1 int
+	var part1, part2 int
 
+	basins := make([][]point, 0)
 	lowPoints := m.LowPoints()
+
 	for _, lp := range lowPoints {
 		if m.LenY() < 20 {
 			fmt.Printf("%v = %d\n", lp, m.HeightAt(lp))
 		}
 		part1 += m.RiskLevelAt(lp)
+
+		basin := m.FindBasin(lp)
+		if m.LenY() < 20 {
+			fmt.Printf("basin of %v = %v\n", lp, basin)
+		}
+		basins = append(basins, basin)
+	}
+
+	basinSizes := make([]int, 0, len(basins))
+	for _, basin := range basins {
+		basinSizes = append(basinSizes, len(basin))
+	}
+	sort.Sort(sort.Reverse(sort.IntSlice(basinSizes)))
+	part2 = 1
+	for i := 0; i < 3 && i < len(basinSizes); i++ {
+		part2 *= basinSizes[i]
 	}
 
 	fmt.Printf("part 1: %d\n", part1)
+	fmt.Printf("part 2: %d\n", part2)
 }
 
 // boring input read
