@@ -24,3 +24,6 @@ To revisit and compare notes:
   - I feel think a declarative solution  would be better (prolog, core.logic)
 - Implemented a bit set, which added a lot of complexity and the input is rather small, so probably overengineered
 
+### Day 10
+
+- Parsers are super fun
